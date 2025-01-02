@@ -17,7 +17,7 @@ type Post struct {
 	CreatedAt string   `json:"created_at"`
 	UpdatedAt string   `json:"updated_at"`
 	// Version   int       `json:"version"`
-	// Comments  []Comment `json:"comments"`
+	Comments []Comment `json:"comments"`
 	// User      User      `json:"user"`
 }
 
