@@ -51,8 +51,8 @@ func main() {
 
 	// Simulate User A and User B updating the same post concurrently
 	wg.Add(2)
-	content := "NEW CONTENT FROM USER BB"
-	title := "NEW TITLE FROM USER AA"
+	content := "NEW CONTENT FROM USER B"
+	title := "NEW TITLE FROM USER A"
 
 	go updatePost(postID, UpdatePostPayload{Title: &title}, &wg)
 	go updatePost(postID, UpdatePostPayload{Content: &content}, &wg)
