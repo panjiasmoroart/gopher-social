@@ -20,6 +20,12 @@ type CreatePostPayload struct {
 	Tags    []string `json:"tags"`
 }
 
+type CreatePostCommentPayload struct {
+	PostID  int64  `json:"post_id" validate:"required"`
+	UserID  int64  `json:"user_id" validate:"required"`
+	Content string `json:"content" validate:"required,max=1000"`
+}
+
 func (app *application) createPostHandler(w http.ResponseWriter, r *http.Request) {
 	var payload CreatePostPayload
 	if err := readJSON(w, r, &payload); err != nil {
@@ -181,4 +187,36 @@ func (app *application) postsContextMiddleware(next http.Handler) http.Handler {
 func getPostFromCtx(r *http.Request) *store.Post {
 	post, _ := r.Context().Value(postCtx).(*store.Post)
 	return post
+}
+
+func (app *application) createPostCommentsHandler(w http.ResponseWriter, r *http.Request) {
+	var payload CreatePostCommentPayload
+
+	if err := readJSON(w, r, &payload); err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	if err := Validate.Struct(payload); err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	postComment := &store.Comment{
+		PostID:  payload.PostID,
+		UserID:  payload.UserID,
+		Content: payload.Content,
+	}
+
+	ctx := r.Context()
+
+	if err := app.store.Comments.Create(ctx, postComment); err != nil {
+		app.internalServerError(w, r, err)
+		return
+	}
+
+	if err := app.jsonResponse(w, http.StatusCreated, postComment); err != nil {
+		app.internalServerError(w, r, err)
+		return
+	}
 }
