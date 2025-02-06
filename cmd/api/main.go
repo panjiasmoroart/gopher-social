@@ -9,8 +9,25 @@ import (
 	"github.com/panjiasmoroart/gopher-social/internal/store"
 )
 
-const version = "0.0.1"
+const version = "1.1.0"
 
+//	@title			GopherSocial API
+//	@description	API for GopherSocial, a social network for gohpers
+//	@termsOfService	http://swagger.io/terms/
+
+//	@contact.name	API Support
+//	@contact.url	http://www.swagger.io/support
+//	@contact.email	support@swagger.io
+
+//	@license.name	Apache 2.0
+//	@license.url	http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @BasePath					/v1
+//
+// @securityDefinitions.apikey	ApiKeyAuth
+// @in							header
+// @name						Authorization
+// @description
 func main() {
 	err := godotenv.Load()
 	if err != nil {
@@ -18,7 +35,8 @@ func main() {
 	}
 
 	cfg := config{
-		addr: env.GetString("ADDR", ":9090"),
+		addr:   env.GetString("ADDR", ":9090"),
+		apiURL: env.GetString("EXTERNAL_URL", "localhost:9090"),
 		db: dbConfig{
 			addr:         env.GetString("DB_ADDR", "postgres://new_userpsql:new_userpsql@localhost/database_name?sslmode=disable"),
 			maxOpenConns: env.GetInt("DB_MAX_OPEN_CONNS", 30),
