@@ -10,6 +10,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/panjiasmoroart/gopher-social/docs"
+	"github.com/panjiasmoroart/gopher-social/internal/mailer"
 	"github.com/panjiasmoroart/gopher-social/internal/store"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
@@ -18,14 +19,16 @@ type application struct {
 	config config
 	store  store.Storage
 	logger *zap.SugaredLogger
+	mailer mailer.Client
 }
 
 type config struct {
-	addr   string
-	db     dbConfig
-	env    string
-	apiURL string
-	mail   mailConfig
+	addr        string
+	db          dbConfig
+	env         string
+	apiURL      string
+	mail        mailConfig
+	frontendURL string
 }
 
 type dbConfig struct {
@@ -36,7 +39,13 @@ type dbConfig struct {
 }
 
 type mailConfig struct {
-	exp time.Duration
+	sendGrid  sendGridConfig
+	exp       time.Duration
+	fromEmail string
+}
+
+type sendGridConfig struct {
+	apiKey string
 }
 
 func (app *application) mount() http.Handler {

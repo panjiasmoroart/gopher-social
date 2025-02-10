@@ -7,6 +7,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/panjiasmoroart/gopher-social/internal/db"
 	"github.com/panjiasmoroart/gopher-social/internal/env"
+	"github.com/panjiasmoroart/gopher-social/internal/mailer"
 	"github.com/panjiasmoroart/gopher-social/internal/store"
 	"go.uber.org/zap"
 )
@@ -37,8 +38,9 @@ func main() {
 	}
 
 	cfg := config{
-		addr:   env.GetString("ADDR", ":9090"),
-		apiURL: env.GetString("EXTERNAL_URL", "localhost:9090"),
+		addr:        env.GetString("ADDR", ":9090"),
+		apiURL:      env.GetString("EXTERNAL_URL", "localhost:9090"),
+		frontendURL: env.GetString("FRONTEND_URL", "http://localhost:5173"),
 		db: dbConfig{
 			addr:         env.GetString("DB_ADDR", "postgres://new_userpsql:new_userpsql@localhost/database_name?sslmode=disable"),
 			maxOpenConns: env.GetInt("DB_MAX_OPEN_CONNS", 30),
@@ -47,7 +49,11 @@ func main() {
 		},
 		env: env.GetString("ENV", "development"),
 		mail: mailConfig{
-			exp: time.Hour * 24 * 3, // 3 days
+			exp:       time.Hour * 24 * 3, // 3 days
+			fromEmail: env.GetString("FROM_EMAIL", ""),
+			sendGrid: sendGridConfig{
+				apiKey: env.GetString("SENDGRID_API_KEY", ""),
+			},
 		},
 	}
 
@@ -72,10 +78,13 @@ func main() {
 
 	store := store.NewStorage(db)
 
+	sendgrid := mailer.NewSendgrid(cfg.mail.sendGrid.apiKey, cfg.mail.fromEmail)
+
 	app := &application{
 		config: cfg,
 		store:  store,
 		logger: logger,
+		mailer: sendgrid,
 	}
 
 	mux := app.mount()
