@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
+	"github.com/panjiasmoroart/gopher-social/internal/auth"
 	"github.com/panjiasmoroart/gopher-social/internal/db"
 	"github.com/panjiasmoroart/gopher-social/internal/env"
 	"github.com/panjiasmoroart/gopher-social/internal/mailer"
@@ -90,19 +91,26 @@ func main() {
 	defer db.Close()
 	logger.Info("database connection pool established")
 
-	store := store.NewStorage(db)
-
 	// sendgrid := mailer.NewSendgrid(cfg.mail.sendGrid.apiKey, cfg.mail.fromEmail)
 	mailtrap, err := mailer.NewMailTrapClient(cfg.mail.mailTrap.apiKey, cfg.mail.fromEmail)
 	if err != nil {
 		logger.Fatal(err)
 	}
 
+	jwtAuthenticator := auth.NewJWTAuthenticator(
+		cfg.auth.token.secret,
+		cfg.auth.token.iss,
+		cfg.auth.token.iss,
+	)
+
+	store := store.NewStorage(db)
+
 	app := &application{
-		config: cfg,
-		store:  store,
-		logger: logger,
-		mailer: mailtrap,
+		config:        cfg,
+		store:         store,
+		logger:        logger,
+		mailer:        mailtrap,
+		authenticator: jwtAuthenticator,
 	}
 
 	mux := app.mount()
