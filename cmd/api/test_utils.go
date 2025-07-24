@@ -26,7 +26,7 @@ func newTestApplication(t *testing.T, cfg config) *application {
 		store:         mockStore,
 		cacheStorage:  mockCacheStore,
 		authenticator: testAuth,
-		// config:        cfg,
+		config:        cfg,
 	}
 
 }
