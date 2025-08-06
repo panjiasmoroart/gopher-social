@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"expvar"
 	"log"
+	"runtime"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -159,6 +161,15 @@ func main() {
 		authenticator: jwtAuthenticator,
 		rateLimiter:   rateLimiter,
 	}
+
+	// Metrics Collected
+	expvar.NewString("version").Set(version)
+	expvar.Publish("database", expvar.Func(func() any {
+		return db.Stats()
+	}))
+	expvar.Publish("goroutines", expvar.Func(func() any {
+		return runtime.NumGoroutine()
+	}))
 
 	mux := app.mount()
 
