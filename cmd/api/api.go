@@ -20,6 +20,7 @@ import (
 	"github.com/panjiasmoroart/gopher-social/docs"
 	"github.com/panjiasmoroart/gopher-social/internal/auth"
 	"github.com/panjiasmoroart/gopher-social/internal/mailer"
+	"github.com/panjiasmoroart/gopher-social/internal/ratelimiter"
 	"github.com/panjiasmoroart/gopher-social/internal/store"
 	"github.com/panjiasmoroart/gopher-social/internal/store/cache"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
@@ -32,6 +33,7 @@ type application struct {
 	logger        *zap.SugaredLogger
 	mailer        mailer.Client
 	authenticator auth.Authenticator
+	rateLimiter   ratelimiter.Limiter
 }
 
 type config struct {
@@ -43,6 +45,7 @@ type config struct {
 	frontendURL string
 	auth        authConfig
 	redisCfg    redisConfig
+	rateLimiter ratelimiter.Config
 }
 
 type authConfig struct {
@@ -97,6 +100,7 @@ func (app *application) mount() http.Handler {
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+	r.Use(app.RateLimiterMiddleware)
 	r.Use(cors.Handler(cors.Options{
 		// AllowedOrigins:   []string{"https://foo.com"}, // Use this to allow specific origin hosts
 		AllowedOrigins: []string{"https://*", "http://*"},
@@ -107,6 +111,10 @@ func (app *application) mount() http.Handler {
 		AllowCredentials: false,
 		MaxAge:           300, // Maximum value not ignored by any of major browsers
 	}))
+
+	// if app.config.rateLimiter.Enabled {
+	// 	r.Use(app.RateLimiterMiddleware)
+	// }
 
 	// Set a timeout value on the request context (ctx), that will signal
 	// through ctx.Done() that the request has timed out and further

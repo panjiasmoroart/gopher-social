@@ -10,6 +10,7 @@ import (
 	"github.com/panjiasmoroart/gopher-social/internal/db"
 	"github.com/panjiasmoroart/gopher-social/internal/env"
 	"github.com/panjiasmoroart/gopher-social/internal/mailer"
+	"github.com/panjiasmoroart/gopher-social/internal/ratelimiter"
 	"github.com/panjiasmoroart/gopher-social/internal/store"
 	"github.com/panjiasmoroart/gopher-social/internal/store/cache"
 	"github.com/redis/go-redis/v9"
@@ -79,6 +80,11 @@ func main() {
 				iss:    "gophersocial",
 			},
 		},
+		rateLimiter: ratelimiter.Config{
+			RequestsPerTimeFrame: env.GetInt("RATELIMITER_REQUESTS_COUNT", 20),
+			TimeFrame:            time.Second * 180,
+			Enabled:              env.GetBool("RATE_LIMITER_ENABLED", true),
+		},
 	}
 
 	// Logger
@@ -99,6 +105,12 @@ func main() {
 
 	defer db.Close()
 	logger.Info("database connection pool established >>>")
+
+	// Rate limiter
+	rateLimiter := ratelimiter.NewFixedWindowLimiter(
+		cfg.rateLimiter.RequestsPerTimeFrame,
+		cfg.rateLimiter.TimeFrame,
+	)
 
 	// Cache
 	var rdb *redis.Client
@@ -145,6 +157,7 @@ func main() {
 		logger:        logger,
 		mailer:        mailtrap,
 		authenticator: jwtAuthenticator,
+		rateLimiter:   rateLimiter,
 	}
 
 	mux := app.mount()
